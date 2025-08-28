@@ -31,7 +31,8 @@
     <taskdef
         name="jmeter"
         classname="org.apache.jmeter.ant.JMeterTask"
-        classpathref="jmeter.classpath" />
+        classpath="${jmeter.home}/lib/ext/ApacheJMeter_core.jar;${jmeter.home}/lib/jorphan.jar;${jmeter.home}/lib/ext/ApacheJMeter_components" />
+
     
     <!-- Clean -->
     <target name="clean">
