@@ -1,52 +1,55 @@
 pipeline {
     agent any
-
+    
     tools {
-        maven 'Maven 3.9.11'
+        ant 'Ant'  // Make sure you have Ant configured in Jenkins
     }
-
+    
+    parameters {
+        choice(
+            name: 'TEST_MODE',
+            choices: ['run-all', 'run-parallel', 'run-end-to-end', 'run-add-products', 'run-add-pet', 'run-add-user'],
+            description: 'Select which test(s) to run'
+        )
+        // No thread/ramp-up parameters - using values from JMX files
+    }
+    
     stages {
-        stage('Checkout SCM') {
-            steps { checkout scm }
-        }
-
-        stage('Run JMeter Tests in Parallel') {
+        stage('Checkout') {
             steps {
-                bat 'mvn clean verify'
+                checkout scm
             }
         }
-
-        stage('Publish Combined HTML Report') {
+        
+        stage('Verify Tools') {
             steps {
-                publishHTML(target: [
-                    reportDir: 'target/jmeter/results/html',
-                    reportFiles: 'index.html',
-                    reportName: 'JMeter Combined HTML Report'
-                ])
+                bat 'ant -version'
+                bat 'echo %JMETER_HOME%'
+                bat 'dir "Test Plans"'
             }
         }
-
-        stage('Publish Individual Reports') {
+        
+        stage('Run JMeter Tests') {
             steps {
-                script {
-                    def folders = findFiles(glob: 'target/jmeter/results/html/*/index.html')
-                    for (file in folders) {
-                        def reportDir = file.path.replaceAll('index.html','')
-                        def reportName = reportDir.tokenize('\\/').last()
-                        publishHTML(target: [
-                            reportDir: reportDir,
-                            reportFiles: 'index.html',
-                            reportName: "JMeter Report - ${reportName}"
-                        ])
-                    }
-                }
+                bat """
+                    ant ${params.TEST_MODE}
+                """
             }
         }
     }
-
+    
     post {
         always {
-            cleanWs()
+            archiveArtifacts artifacts: 'jmeter-reports/**/*', fingerprint: true
+            perfReport sourceDataFiles: 'jmeter-reports/jtl/*.jtl'
+            publishHTML(target: [
+                allowMissing: true,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'jmeter-reports/html/combined-*',
+                reportFiles: 'index.html',
+                reportName: 'JMeter Combined Report'
+            ])
         }
     }
 }
