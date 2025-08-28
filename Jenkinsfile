@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     tools {
-        ant 'Ant'  // Make sure you have Ant configured in Jenkins
+        ant 'Ant 1.10'  // Make sure you have Ant configured in Jenkins
     }
     
     parameters {
