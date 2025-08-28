@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="PetStore-Tests" default="run-all" basedir=".">
+    <!-- Properties with Windows paths -->
+    <property environment="env"/>
+    <property name="jmeter.home" location="${env.JMETER_HOME}" />
+    <property name="test.dir" location="Test Plans" />
+    <property name="report.dir" location="jmeter-reports" />
+    <property name="jmeter.result.jtl.dir" location="${report.dir}/jtl" />
+    <property name="jmeter.result.html.dir" location="${report.dir}/html" />
+    
+    <!-- Default values for properties -->
+    <property name="threads" value="10" />
+    <property name="rampup" value="30" />
+    <property name="duration" value="300" />
+    <property name="loop_count" value="1" />
+    
+    <!-- Define timestamp for reports -->
+    <tstamp>
+        <format property="time.stamp" pattern="yyyy-MM-dd-HH-mm-ss" />
+    </tstamp>
+    
+    <!-- Define JMeter task -->
+    <path id="jmeter.classpath">
+        <fileset dir="${jmeter.home}/lib" includes="*.jar" />
+        <fileset dir="${jmeter.home}/lib/ext" includes="*.jar" />
+    </path>
+    
+    <taskdef
+        name="jmeter"
+        classname="org.apache.jmeter.ant.JMeterTask"
+        classpathref="jmeter.classpath" />
+    
+    <!-- Clean -->
+    <target name="clean">
+        <delete dir="${report.dir}" />
+        <mkdir dir="${jmeter.result.jtl.dir}" />
+        <mkdir dir="${jmeter.result.html.dir}" />
+    </target>
+
+    <!-- List available test plans -->
+    <target name="list-tests">
+        <echo message="Available test plans in ${test.dir}:" />
+        <fileset id="jmx.files" dir="${test.dir}" includes="**/*.jmx" />
+        <property name="prop.jmx.files" refid="jmx.files" />
+        <echo message="${prop.jmx.files}" />
+    </target>
+
+    <!-- Run End to End Flow -->
+    <target name="run-end-to-end" depends="clean">
+        <jmeter 
+            jmeterhome="${jmeter.home}"
+            resultlogdir="${jmeter.result.jtl.dir}"
+            resultlog="${jmeter.result.jtl.dir}/PetStore-End-to-End-Flow-${time.stamp}.jtl">
+            <testplans dir="${test.dir}" includes="PetStore-End-to-End-Flow.jmx" />
+            <property name="threads" value="${threads}" />
+            <property name="rampup" value="${rampup}" />
+            <property name="duration" value="${duration}" />
+            <property name="loop_count" value="${loop_count}" />
+        </jmeter>
+        
+        <antcall target="generate-report">
+            <param name="report.jtl" value="${jmeter.result.jtl.dir}/PetStore-End-to-End-Flow-${time.stamp}.jtl" />
+            <param name="report.html" value="${jmeter.result.html.dir}/PetStore-End-to-End-Flow-${time.stamp}" />
+        </antcall>
+    </target>
+    
+    <!-- Run Add Products -->
+    <target name="run-add-products" depends="clean">
+        <jmeter 
+            jmeterhome="${jmeter.home}"
+            resultlogdir="${jmeter.result.jtl.dir}"
+            resultlog="${jmeter.result.jtl.dir}/PetStore-Test-Plan-Add-All-Products-${time.stamp}.jtl">
+            <testplans dir="${test.dir}" includes="PetStore-Test-Plan-Add-All-Products.jmx" />
+            <property name="threads" value="${threads}" />
+            <property name="rampup" value="${rampup}" />
+            <property name="duration" value="${duration}" />
+            <property name="loop_count" value="${loop_count}" />
+        </jmeter>
+        
+        <antcall target="generate-report">
+            <param name="report.jtl" value="${jmeter.result.jtl.dir}/PetStore-Test-Plan-Add-All-Products-${time.stamp}.jtl" />
+            <param name="report.html" value="${jmeter.result.html.dir}/PetStore-Test-Plan-Add-All-Products-${time.stamp}" />
+        </antcall>
+    </target>
+    
+    <!-- Run Add New Pet -->
+    <target name="run-add-pet" depends="clean">
+        <jmeter 
+            jmeterhome="${jmeter.home}"
+            resultlogdir="${jmeter.result.jtl.dir}"
+            resultlog="${jmeter.result.jtl.dir}/PetStore_AddNewPET-${time.stamp}.jtl">
+            <testplans dir="${test.dir}" includes="PetStore_AddNewPET.jmx" />
+            <property name="threads" value="${threads}" />
+            <property name="rampup" value="${rampup}" />
+            <property name="duration" value="${duration}" />
+            <property name="loop_count" value="${loop_count}" />
+        </jmeter>
+        
+        <antcall target="generate-report">
+            <param name="report.jtl" value="${jmeter.result.jtl.dir}/PetStore_AddNewPET-${time.stamp}.jtl" />
+            <param name="report.html" value="${jmeter.result.html.dir}/PetStore_AddNewPET-${time.stamp}" />
+        </antcall>
+    </target>
+    
+    <!-- Run Add New User -->
+    <target name="run-add-user" depends="clean">
+        <jmeter 
+            jmeterhome="${jmeter.home}"
+            resultlogdir="${jmeter.result.jtl.dir}"
+            resultlog="${jmeter.result.jtl.dir}/PetStore_AddNewUser-${time.stamp}.jtl">
+            <testplans dir="${test.dir}" includes="PetStore_AddNewUser.jmx" />
+            <property name="threads" value="${threads}" />
+            <property name="rampup" value="${rampup}" />
+            <property name="duration" value="${duration}" />
+            <property name="loop_count" value="${loop_count}" />
+        </jmeter>
+        
+        <antcall target="generate-report">
+            <param name="report.jtl" value="${jmeter.result.jtl.dir}/PetStore_AddNewUser-${time.stamp}.jtl" />
+            <param name="report.html" value="${jmeter.result.html.dir}/PetStore_AddNewUser-${time.stamp}" />
+        </antcall>
+    </target>
+    
+    <!-- Run all tests sequentially -->
+    <target name="run-all" depends="clean">
+        <antcall target="run-end-to-end" />
+        <antcall target="run-add-products" />
+        <antcall target="run-add-pet" />
+        <antcall target="run-add-user" />
+        
+        <!-- Generate combined report -->
+        <antcall target="generate-combined-report" />
+    </target>
+    
+    <!-- Run tests in parallel (like LoadRunner Controller) -->
+    <target name="run-parallel" depends="clean">
+        <parallel threadCount="4">
+            <!-- Execute each test in parallel -->
+            <antcall target="run-parallel-test">
+                <param name="test.file" value="PetStore-End-to-End-Flow.jmx" />
+            </antcall>
+            
+            <antcall target="run-parallel-test">
+                <param name="test.file" value="PetStore-Test-Plan-Add-All-Products.jmx" />
+            </antcall>
+            
+            <antcall target="run-parallel-test">
+                <param name="test.file" value="PetStore_AddNewPET.jmx" />
+            </antcall>
+            
+            <antcall target="run-parallel-test">
+                <param name="test.file" value="PetStore_AddNewUser.jmx" />
+            </antcall>
+        </parallel>
+        
+        <!-- Generate combined report -->
+        <antcall target="generate-combined-report" />
+    </target>
+    
+    <!-- Helper target for parallel execution -->
+    <target name="run-parallel-test">
+        <basename property="test.name" file="${test.file}" suffix=".jmx" />
+        <jmeter 
+            jmeterhome="${jmeter.home}"
+            resultlogdir="${jmeter.result.jtl.dir}"
+            resultlog="${jmeter.result.jtl.dir}/${test.name}-${time.stamp}.jtl">
+            <testplans dir="${test.dir}" includes="${test.file}" />
+            <property name="threads" value="${threads}" />
+            <property name="rampup" value="${rampup}" />
+            <property name="duration" value="${duration}" />
+            <property name="loop_count" value="${loop_count}" />
+        </jmeter>
+    </target>
+    
+    <!-- Generate report for a single test -->
+    <target name="generate-report">
+        <echo message="Generating HTML report: ${report.html}" />
+        <exec executable="cmd" dir="${basedir}" failonerror="true">
+            <arg line="/c ${jmeter.home}\bin\jmeter.bat -g ${report.jtl} -o ${report.html}" />
+        </exec>
+    </target>
+    
+    <!-- Generate combined report -->
+    <target name="generate-combined-report">
+        <echo message="Generating combined HTML report" />
+        <exec executable="cmd" dir="${basedir}" failonerror="true">
+            <arg line="/c ${jmeter.home}\bin\jmeter.bat -g ${jmeter.result.jtl.dir} -o ${jmeter.result.html.dir}\combined-${time.stamp}" />
+        </exec>
+    </target>
+</project>
