@@ -3,7 +3,7 @@
 
     <!-- ==================== Properties ==================== -->
     <property environment="env"/>
-    <condition property="jmeter.home" value="${env.JMETER_HOME}" else="C:\apache-jmeter">
+    <condition property="jmeter.home" value="${env.JMETER_HOME}" else="D:\JMeter\apache-jmeter-5.6.3">
         <isset property="env.JMETER_HOME"/>
     </condition>
 
