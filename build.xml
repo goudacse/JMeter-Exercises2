@@ -1,205 +1,114 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="PetStore-JMeter-Tests" default="run-all" basedir=".">
-    <!-- Properties with Windows paths -->
+
+    <!-- ==================== Properties ==================== -->
     <property environment="env"/>
     <condition property="jmeter.home" value="${env.JMETER_HOME}" else="C:\apache-jmeter">
         <isset property="env.JMETER_HOME"/>
     </condition>
-    <property name="test.dir" location="Test Plans" />
-    <property name="report.dir" location="jmeter-reports" />
-    <property name="jmeter.result.jtl.dir" location="${report.dir}/jtl" />
-    <property name="jmeter.result.html.dir" location="${report.dir}/html" />
-    
-    <!-- Define timestamp for reports -->
+
+    <property name="test.dir" location="TestPlans"/>
+    <property name="report.dir" location="jmeter-reports"/>
+    <property name="jmeter.result.jtl.dir" location="${report.dir}/jtl"/>
+    <property name="jmeter.result.html.dir" location="${report.dir}/html"/>
+
+    <!-- Timestamp for report filenames -->
     <tstamp>
-        <format property="time.stamp" pattern="yyyy-MM-dd-HH-mm-ss" />
+        <format property="time.stamp" pattern="yyyy-MM-dd-HH-mm-ss"/>
     </tstamp>
-    
-    <!-- Check if JMeter exists -->
+
+    <!-- ==================== Check JMeter ==================== -->
     <target name="check-jmeter">
-        <echo message="Checking JMeter installation at: ${jmeter.home}" />
+        <echo message="Checking JMeter installation at: ${jmeter.home}"/>
         <available file="${jmeter.home}/bin/jmeter.bat" property="jmeter.present"/>
-        <fail unless="jmeter.present" message="JMeter not found at ${jmeter.home}. Please set JMETER_HOME environment variable correctly." />
+        <fail unless="jmeter.present" message="JMeter not found at ${jmeter.home}. Set JMETER_HOME correctly."/>
     </target>
-    
-    <!-- Define JMeter task -->
+
+    <!-- ==================== Taskdef ==================== -->
     <path id="jmeter.classpath">
-        <fileset dir="${jmeter.home}/lib" includes="*.jar" />
-        <fileset dir="${jmeter.home}/lib/ext" includes="*.jar" />
+        <fileset dir="${jmeter.home}/lib">
+            <include name="**/*.jar"/>
+        </fileset>
+        <fileset dir="${jmeter.home}/lib/ext">
+            <include name="**/*.jar"/>
+        </fileset>
     </path>
-    
+
     <taskdef
         name="jmeter"
         classname="org.apache.jmeter.ant.JMeterTask"
-        classpath="${jmeter.home}/lib/ext/ApacheJMeter_core.jar;${jmeter.home}/lib/jorphan.jar;${jmeter.home}/lib/ext/ApacheJMeter_components" />
+        classpathref="jmeter.classpath"/>
 
-    
-    <!-- Clean -->
+    <!-- ==================== Clean ==================== -->
     <target name="clean">
-        <delete dir="${report.dir}" />
-        <mkdir dir="${jmeter.result.jtl.dir}" />
-        <mkdir dir="${jmeter.result.html.dir}" />
+        <delete dir="${report.dir}"/>
+        <mkdir dir="${jmeter.result.jtl.dir}"/>
+        <mkdir dir="${jmeter.result.html.dir}"/>
     </target>
 
-    <!-- List available test plans -->
-    <target name="list-tests" depends="check-jmeter">
-        <echo message="Available test plans in ${test.dir}:" />
-        <pathconvert pathsep="${line.separator}" property="test.list">
-            <fileset dir="${test.dir}" includes="**/*.jmx" />
-            <mapper type="flatten" />
-        </pathconvert>
-        <echo message="${test.list}" />
+    <!-- ==================== Run Single Test ==================== -->
+    <target name="run-test">
+        <echo message="Running ${test.name}.jmx"/>
+        <jmeter
+            jmeterhome="${jmeter.home}"
+            resultlogdir="${jmeter.result.jtl.dir}"
+            resultlog="${jmeter.result.jtl.dir}/${test.name}-${time.stamp}.jtl">
+            <testplans dir="${test.dir}" includes="${test.name}.jmx"/>
+        </jmeter>
+
+        <antcall target="generate-report">
+            <param name="report.jtl" value="${jmeter.result.jtl.dir}/${test.name}-${time.stamp}.jtl"/>
+            <param name="report.html" value="${jmeter.result.html.dir}/${test.name}-${time.stamp}"/>
+        </antcall>
     </target>
 
-    <!-- Run End to End Flow -->
-    <target name="run-end-to-end" depends="clean,check-jmeter">
-        <echo message="Running PetStore-End-to-End-Flow.jmx" />
-        <jmeter 
-            jmeterhome="${jmeter.home}"
-            resultlogdir="${jmeter.result.jtl.dir}"
-            resultlog="${jmeter.result.jtl.dir}/PetStore-End-to-End-Flow-${time.stamp}.jtl">
-            <testplans dir="${test.dir}" includes="PetStore-End-to-End-Flow.jmx" />
-            <!-- No property overrides - using values from JMX file -->
-        </jmeter>
-        
-        <antcall target="generate-report">
-            <param name="report.jtl" value="${jmeter.result.jtl.dir}/PetStore-End-to-End-Flow-${time.stamp}.jtl" />
-            <param name="report.html" value="${jmeter.result.html.dir}/PetStore-End-to-End-Flow-${time.stamp}" />
-        </antcall>
-    </target>
-    
-    <!-- Run Add Products -->
-    <target name="run-add-products" depends="clean,check-jmeter">
-        <echo message="Running PetStore-Test-Plan-Add-All-Products.jmx" />
-        <jmeter 
-            jmeterhome="${jmeter.home}"
-            resultlogdir="${jmeter.result.jtl.dir}"
-            resultlog="${jmeter.result.jtl.dir}/PetStore-Test-Plan-Add-All-Products-${time.stamp}.jtl">
-            <testplans dir="${test.dir}" includes="PetStore-Test-Plan-Add-All-Products.jmx" />
-            <!-- No property overrides - using values from JMX file -->
-        </jmeter>
-        
-        <antcall target="generate-report">
-            <param name="report.jtl" value="${jmeter.result.jtl.dir}/PetStore-Test-Plan-Add-All-Products-${time.stamp}.jtl" />
-            <param name="report.html" value="${jmeter.result.html.dir}/PetStore-Test-Plan-Add-All-Products-${time.stamp}" />
-        </antcall>
-    </target>
-    
-    <!-- Run Add New Pet -->
-    <target name="run-add-pet" depends="clean,check-jmeter">
-        <echo message="Running PetStore_AddNewPET.jmx" />
-        <jmeter 
-            jmeterhome="${jmeter.home}"
-            resultlogdir="${jmeter.result.jtl.dir}"
-            resultlog="${jmeter.result.jtl.dir}/PetStore_AddNewPET-${time.stamp}.jtl">
-            <testplans dir="${test.dir}" includes="PetStore_AddNewPET.jmx" />
-            <!-- No property overrides - using values from JMX file -->
-        </jmeter>
-        
-        <antcall target="generate-report">
-            <param name="report.jtl" value="${jmeter.result.jtl.dir}/PetStore_AddNewPET-${time.stamp}.jtl" />
-            <param name="report.html" value="${jmeter.result.html.dir}/PetStore_AddNewPET-${time.stamp}" />
-        </antcall>
-    </target>
-    
-    <!-- Run Add New User -->
-    <target name="run-add-user" depends="clean,check-jmeter">
-        <echo message="Running PetStore_AddNewUser.jmx" />
-        <jmeter 
-            jmeterhome="${jmeter.home}"
-            resultlogdir="${jmeter.result.jtl.dir}"
-            resultlog="${jmeter.result.jtl.dir}/PetStore_AddNewUser-${time.stamp}.jtl">
-            <testplans dir="${test.dir}" includes="PetStore_AddNewUser.jmx" />
-            <!-- No property overrides - using values from JMX file -->
-        </jmeter>
-        
-        <antcall target="generate-report">
-            <param name="report.jtl" value="${jmeter.result.jtl.dir}/PetStore_AddNewUser-${time.stamp}.jtl" />
-            <param name="report.html" value="${jmeter.result.html.dir}/PetStore_AddNewUser-${time.stamp}" />
-        </antcall>
-    </target>
-    
-    <!-- Run all tests sequentially -->
-    <target name="run-all" depends="clean,check-jmeter">
-        <echo message="Running all tests sequentially" />
-        <antcall target="run-end-to-end-internal" />
-        <antcall target="run-add-products-internal" />
-        <antcall target="run-add-pet-internal" />
-        <antcall target="run-add-user-internal" />
-        
-        <!-- Generate combined report -->
-        <antcall target="generate-combined-report" />
-    </target>
-    
-    <!-- Internal targets for sequential execution -->
-    <target name="run-end-to-end-internal">
-        <jmeter 
-            jmeterhome="${jmeter.home}"
-            resultlogdir="${jmeter.result.jtl.dir}"
-            resultlog="${jmeter.result.jtl.dir}/PetStore-End-to-End-Flow-${time.stamp}.jtl">
-            <testplans dir="${test.dir}" includes="PetStore-End-to-End-Flow.jmx" />
-            <!-- Using values from JMX file -->
-        </jmeter>
-    </target>
-    
-    <target name="run-add-products-internal">
-        <jmeter 
-            jmeterhome="${jmeter.home}"
-            resultlogdir="${jmeter.result.jtl.dir}"
-            resultlog="${jmeter.result.jtl.dir}/PetStore-Test-Plan-Add-All-Products-${time.stamp}.jtl">
-            <testplans dir="${test.dir}" includes="PetStore-Test-Plan-Add-All-Products.jmx" />
-            <!-- Using values from JMX file -->
-        </jmeter>
-    </target>
-    
-    <target name="run-add-pet-internal">
-        <jmeter 
-            jmeterhome="${jmeter.home}"
-            resultlogdir="${jmeter.result.jtl.dir}"
-            resultlog="${jmeter.result.jtl.dir}/PetStore_AddNewPET-${time.stamp}.jtl">
-            <testplans dir="${test.dir}" includes="PetStore_AddNewPET.jmx" />
-            <!-- Using values from JMX file -->
-        </jmeter>
-    </target>
-    
-    <target name="run-add-user-internal">
-        <jmeter 
-            jmeterhome="${jmeter.home}"
-            resultlogdir="${jmeter.result.jtl.dir}"
-            resultlog="${jmeter.result.jtl.dir}/PetStore_AddNewUser-${time.stamp}.jtl">
-            <testplans dir="${test.dir}" includes="PetStore_AddNewUser.jmx" />
-            <!-- Using values from JMX file -->
-        </jmeter>
-    </target>
-    
-    <!-- Run tests in parallel (like LoadRunner Controller) -->
-    <target name="run-parallel" depends="clean,check-jmeter">
-        <echo message="Running all tests in parallel (LoadRunner Controller style)" />
-        <parallel threadCount="4" failonany="false">
-            <!-- Execute each test in parallel, using settings from JMX files -->
-            <antcall target="run-end-to-end-internal" />
-            <antcall target="run-add-products-internal" />
-            <antcall target="run-add-pet-internal" />
-            <antcall target="run-add-user-internal" />
-        </parallel>
-        
-        <!-- Generate combined report -->
-        <antcall target="generate-combined-report" />
-    </target>
-    
-    <!-- Generate report for a single test -->
+    <!-- ==================== Generate HTML Report ==================== -->
     <target name="generate-report">
-        <echo message="Generating HTML report: ${report.html}" />
-        <exec executable="cmd" dir="${basedir}" failonerror="false">
-            <arg line="/c &quot;${jmeter.home}\bin\jmeter.bat&quot; -g &quot;${report.jtl}&quot; -o &quot;${report.html}&quot;" />
+        <echo message="Generating HTML report: ${report.html}"/>
+        <exec executable="cmd" dir="${basedir}" failonerror="true">
+            <arg line="/c &quot;${jmeter.home}\bin\jmeter.bat&quot; -g &quot;${report.jtl}&quot; -o &quot;${report.html}&quot;"/>
         </exec>
     </target>
-    
-    <!-- Generate combined report -->
-    <target name="generate-combined-report">
-        <echo message="Generating combined HTML report" />
-        <exec executable="cmd" dir="${basedir}" failonerror="false">
-            <arg line="/c &quot;${jmeter.home}\bin\jmeter.bat&quot; -g &quot;${jmeter.result.jtl.dir}&quot; -o &quot;${jmeter.result.html.dir}\combined-${time.stamp}&quot;" />
-        </exec>
+
+    <!-- ==================== Run All Tests Sequentially ==================== -->
+    <target name="run-all" depends="clean,check-jmeter">
+        <echo message="Running all tests sequentially"/>
+        <antcall target="run-end-to-end"/>
+        <antcall target="run-add-products"/>
+        <antcall target="run-add-pet"/>
+        <antcall target="run-add-user"/>
     </target>
+
+    <!-- ==================== Individual Tests ==================== -->
+    <target name="run-end-to-end">
+        <property name="test.name" value="PetStore-End-to-End-Flow"/>
+        <antcall target="run-test"/>
+    </target>
+
+    <target name="run-add-products">
+        <property name="test.name" value="PetStore-Test-Plan-Add-All-Products"/>
+        <antcall target="run-test"/>
+    </target>
+
+    <target name="run-add-pet">
+        <property name="test.name" value="PetStore_AddNewPET"/>
+        <antcall target="run-test"/>
+    </target>
+
+    <target name="run-add-user">
+        <property name="test.name" value="PetStore_AddNewUser"/>
+        <antcall target="run-test"/>
+    </target>
+
+    <!-- ==================== Run Tests in Parallel ==================== -->
+    <target name="run-parallel" depends="clean,check-jmeter">
+        <echo message="Running all tests in parallel"/>
+        <parallel threadCount="4" failonany="true">
+            <antcall target="run-end-to-end"/>
+            <antcall target="run-add-products"/>
+            <antcall target="run-add-pet"/>
+            <antcall target="run-add-user"/>
+        </parallel>
+    </target>
+
 </project>
