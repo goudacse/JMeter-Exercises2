@@ -1,65 +1,40 @@
 pipeline {
     agent any
 
-    environment {
-        JMETER_HOME = 'D:\\JMeter\\apache-jmeter-5.6.3'
-        REPORT_DIR = 'jmeter-report'
+    tools {
+        maven 'Maven 3.9.11'
     }
 
     stages {
         stage('Checkout SCM') {
-            steps {
-                checkout scm
-            }
+            steps { checkout scm }
         }
 
         stage('Run JMeter Tests in Parallel') {
             steps {
-                bat 'ant -f build.xml run-all'
+                bat 'mvn clean verify'
             }
         }
 
-        stage('Generate Individual HTML Reports') {
+        stage('Publish Combined HTML Report') {
             steps {
-                bat """
-                for %%f in (%REPORT_DIR%\\*.jtl) do (
-                    if not exist %REPORT_DIR%\\html\\%%~nf mkdir %REPORT_DIR%\\html\\%%~nf
-                    %JMETER_HOME%\\bin\\jmeter.bat -g %%f -o %REPORT_DIR%\\html\\%%~nf
-                )
-                """
-            }
-        }
-
-        stage('Generate Combined HTML Report') {
-            steps {
-                bat """
-                if exist %REPORT_DIR%\\combined.jtl (
-                    if not exist %REPORT_DIR%\\html\\combined mkdir %REPORT_DIR%\\html\\combined
-                    %JMETER_HOME%\\bin\\jmeter.bat -g %REPORT_DIR%\\combined.jtl -o %REPORT_DIR%\\html\\combined
-                ) else (
-                    echo ERROR: combined.jtl not found
-                    exit /b 1
-                )
-                """
-            }
-        }
-
-        stage('Publish HTML Reports') {
-            steps {
-                // Combined report
                 publishHTML(target: [
-                    reportDir: '%REPORT_DIR%/html/combined',
+                    reportDir: 'target/jmeter/results/html',
                     reportFiles: 'index.html',
-                    reportName: 'Combined JMeter Report'
+                    reportName: 'JMeter Combined HTML Report'
                 ])
+            }
+        }
 
-                // Individual reports
+        stage('Publish Individual Reports') {
+            steps {
                 script {
-                    def htmlFolders = findFiles(glob: "${env.REPORT_DIR}/html/*/index.html")
-                    for (file in htmlFolders) {
-                        def reportName = file.path.split("/").last().replace("index.html","").replace("\\","")
+                    def folders = findFiles(glob: 'target/jmeter/results/html/*/index.html')
+                    for (file in folders) {
+                        def reportDir = file.path.replaceAll('index.html','')
+                        def reportName = reportDir.tokenize('\\/').last()
                         publishHTML(target: [
-                            reportDir: file.path.replace("index.html",""),
+                            reportDir: reportDir,
                             reportFiles: 'index.html',
                             reportName: "JMeter Report - ${reportName}"
                         ])
